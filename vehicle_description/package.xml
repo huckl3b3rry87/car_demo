@@ -1,0 +1,21 @@
+<package format="2">
+  <name>vehicle_description</name>
+  <version>0.0.1</version>
+  <description>
+  Provides a URDF for a prius
+  </description>
+  <maintainer email="sloretz@openrobotics.org">shane loretz</maintainer>
+  <license>APACHE 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>urdf</depend>
+  <depend>roscpp</depend>
+  <depend>rospy</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>sensor_msgs</depend>
+  <depend>gazebo_ros</depend>
+  <depend>tf</depend>
+  <!--TODO remove this in GazeboRosVelodyneLaser.cpp depend>tf</depend-->
+
+</package>

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!--  ************** Global Parameters ***************  -->
+  <!--param name="/use_sim_time" value="true"/-->
+
+  <rosparam command="load" file="$(find car_demo)/config/global_params.yaml" />
+
+  <!-- TODO fix gazebo and RViz views on hmmwv -->
+
+  <!-- TODO use the robot name parametrically in all files-->
+  <arg name="name" default="hmmwv"/>
+
+  <!-- start gazebo and load the world -->
+  <include file="$(find car_demo)/launch/world.launch" />
+
+  <!-- spawn robot into Gazebo -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find vehicle_description)/urdf/vehicle.urdf.xacro"/>
+  <node name="spawn_robot" output="screen" pkg="gazebo_ros" respawn="false" type="spawn_model" args="-urdf -param robot_description -model robot_description"/>
+
+</launch>

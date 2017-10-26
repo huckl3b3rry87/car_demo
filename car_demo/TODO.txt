@@ -1,0 +1,18 @@
+
+TODO
+
+Priority: High
+
+
+Priority: Medium
+
+1. frame_tf_broadcaster.cpp
+{ //TODO set this as a parameter
+  private_node.getParam("robot_name", robot_name);
+}
+
+parametrically get static tfs
+
+
+Currently not in use:
+1. frame_tf_broadcaster.cpp

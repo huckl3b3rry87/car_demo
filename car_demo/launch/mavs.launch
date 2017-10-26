@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!--  ************** Global Parameters ***************  -->
+  <!--param name="/use_sim_time" value="true"/-->
+
+  <rosparam command="load" file="$(find car_demo)/config/global_params.yaml" />
+
+  <!-- TODO fix gazebo and RViz views on hmmwv -->
+
+  <!-- TODO use the robot name parametrically in all files-->
+  <arg name="name" default="hmmwv"/>
+
+  <!-- start gazebo and load the world -->
+  <include file="$(find car_demo)/launch/world.launch" />
+
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" >
+    <!-- <remap from="robot_description" to="different_robot_description" /> -->
+    <!-- <remap from="joint_states" to="/prius/joint_states" /> -->
+  </node>
+  <node pkg="fake_localization" type="fake_localization" name="fake_localization">
+    <!-- <remap from="base_pose_ground_truth" to="/prius/base_pose_ground_truth"/> -->
+  </node>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="very_inaccurate_odom" args="0 0 0 0 0 0 odom base_link"/>
+
+  <!-- spawn obstacles -->
+  <param name="obstacles" command="$(find xacro)/xacro --inorder $(find vehicle_description)/urdf/obstacles.urdf.xacro " />
+  <node  name="spawn_obstacles" output="screen" pkg="gazebo_ros" respawn="false" type="spawn_model" args="-urdf -param obstacles -model obstacles" />
+
+  <!-- spawn robot into Gazebo -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find vehicle_description)/urdf/vehicle.urdf.xacro"/>
+  <node name="spawn_robot" output="screen" pkg="gazebo_ros" respawn="false" type="spawn_model" args="-urdf -param robot_description -model robot_description"/>
+
+  <!-- Run two joy nodes publishing to the same topic, just to cover two possible joystick locations -->
+  <node pkg="joy" type="joy_node" name="joy_node0">
+    <param name="dev" value="/dev/input/js0"/>
+  </node>
+  <!--node pkg="joy" type="joy_node" name="joy_node1"-->
+    <!--param name="dev" value="/dev/input/js1"/-->
+  <!--/node-->
+  <node pkg="car_demo" type="joystick_translator" name="joystick_translator"/>
+
+</launch>

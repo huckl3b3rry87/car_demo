@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<robot name="vehicle" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+  <!-- PROPERTIES TODO make this vehicle agnostic -->
+
+  <!-- Load Properties -->
+  <xacro:property name="global_params_file" value="$(find car_demo)/config/global_params.yaml"/>
+  <xacro:property name="global_params" value="${load_yaml(global_params_file)}"/>
+
+  <xacro:property name="vehicle_params_file" value="$(find vehicle_description)/config/hmmwv_params.yaml"/>
+  <xacro:property name="vehicle" value="${load_yaml(vehicle_params_file)}"/>
+
+  <xacro:property name="mavs_params_file" value="$(find car_demo)/config/mavs_params.yaml"/>
+  <xacro:property name="mavs" value="${load_yaml(mavs_params_file)}"/>
+  <!-- Load Properties -->
+
+  <!-- Frames, topics and names -->
+  <xacro:property name="robotNamespace" value="${global_params['robotNamespace']}" />
+  <xacro:property name="robotName" value="${global_params['robotName']}" />
+  <xacro:property name="map" value="${global_params['map']}" />
+  <xacro:property name="ground_truth_topic" value="${global_params['ground_truth_topic']}" />
+
+  <!-- initial vehicle states -->
+  <xacro:property name="x0" value="${mavs['mavs']['X0']['x']}" />
+  <xacro:property name="y0" value="${mavs['mavs']['X0']['y']}" />
+  <xacro:property name="psi0" value="${mavs['mavs']['X0']['psi']}" />
+
+  <xacro:property name="scale_factor" value="${vehicle['scale_factor']}" />
+  <xacro:property name="mesh_mode" value="1"/>
+
+  <!-- Vehicle geometry -->
+  <xacro:property name="base_link" value="${vehicle['base_link']}" />
+  <xacro:property name="base_width" value="${vehicle['base_width']}" />
+  <xacro:property name="base_length" value="${vehicle['base_length']}" />
+  <xacro:property name="base_height" value="${vehicle['base_height']}" />
+  <xacro:property name="base_clearance" value="${vehicle['base_clearance']}" />
+  <xacro:property name="base_geometry">
+    <geometry>
+      <box size="${base_length} ${base_width} ${base_height}" />
+    </geometry>
+  </xacro:property>
+
+  <!-- Wheels -->
+  <xacro:property name="wheel_radius" value="${vehicle['wheel_radius']}" />
+  <xacro:property name="wheel_width" value="${vehicle['wheel_width']}" />
+  <xacro:property name="wheel_mass" value="${vehicle['wheel_mass']}" /> <!-- in kg-->
+  <xacro:property name="la" value="${vehicle['la']}" />
+  <xacro:property name="lb" value="${vehicle['lb']}"/>
+  <xacro:property name="wheel_base" value="${vehicle['wheel_base']}" />
+  <xacro:property name="mu1" value="${vehicle['mu1']}" />
+  <xacro:property name="mu2" value="${vehicle['mu2']}" />
+  <xacro:property name="minDepth" value="${vehicle['minDepth']}" />
+  <xacro:property name="kp" value="${vehicle['kp']}" />
+
+  <!-- Axles -->
+  <xacro:property name="axle_length" value="${vehicle['axle_length']}" />
+  <xacro:property name="axle_radius" value="${vehicle['axle_radius']}" />
+  <xacro:property name="axle_x_pos" value="${vehicle['axle_x_pos']}" />
+
+  <!-- LiDAR properties -->
+  <xacro:property name="lidar_z" value="${vehicle['lidar_z']}"/>
+  <xacro:property name="lidar_x" value="${vehicle['lidar_x']}"/>
+  <xacro:property name="topic" value="${vehicle['topic']}"/>
+
+  <!-- PROPERTIES TODO make this vehicle agnostic -->
+  <!-- Necessary includes -->
+  <xacro:include filename="$(find vehicle_description)/urdf/materials.urdf.xacro" />
+  <xacro:include filename="$(find vehicle_description)/urdf/body.urdf.xacro"/>
+  <xacro:include filename="$(find vehicle_description)/urdf/steering_wheel.urdf.xacro"/>
+  <xacro:include filename="$(find vehicle_description)/urdf/wheel_axle.urdf.xacro"/>
+
+  <!-- Vehicle body -->
+  <xacro:footprint_link/>
+  <chassis_link base_link="${base_link}">
+    <xacro:insert_block name="base_geometry" />
+  </chassis_link>
+
+  <!-- Steering wheel -->
+  <xacro:steering_wheel/>
+
+  <!-- Axles and Wheel Links  -->
+  <xacro:axle lr="left"/>
+  <xacro:axle lr="right"/>
+  <xacro:wheel fb="front" lr="left" parent="left_axle"/>
+  <xacro:wheel fb="front" lr="right" parent="right_axle"/>
+  <xacro:wheel fb="rear" lr="left" parent="${base_link}"/>
+  <xacro:wheel fb="rear" lr="right" parent="${base_link}"/>
+
+  <!-- ros_control plugin NOTE might not need this! -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>${robotNamespace}</robotNamespace>
+      <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="prius_hybrid_drive" filename="libPriusHybridPlugin.so">
+      <chassis>${base_link}</chassis>
+      <front_left_wheel>front_left_wheel_joint</front_left_wheel>
+      <front_right_wheel>front_right_wheel_joint</front_right_wheel>
+      <front_left_wheel_steering>front_left_steer_joint</front_left_wheel_steering>
+      <front_right_wheel_steering>front_right_steer_joint</front_right_wheel_steering>
+      <back_left_wheel>rear_left_wheel_joint</back_left_wheel>
+      <back_right_wheel>rear_right_wheel_joint</back_right_wheel>
+      <steering_wheel>steering_joint</steering_wheel>
+      <chassis_aero_force_gain>0.63045</chassis_aero_force_gain>
+      <front_torque>859.4004393000001</front_torque>
+      <back_torque>0</back_torque>
+      <front_brake_torque>1031.28052716</front_brake_torque>
+      <back_brake_torque>687.5203514400001</back_brake_torque>
+      <max_speed>37.998337013956565</max_speed>
+      <min_gas_flow>8.981854013171626e-05</min_gas_flow>
+      <gas_efficiency>0.371</gas_efficiency>
+      <battery_charge_watt_hours>291</battery_charge_watt_hours>
+      <battery_discharge_watt_hours>214</battery_discharge_watt_hours>
+      <max_steer>0.6458</max_steer>
+      <flwheel_steering_p_gain>1e4</flwheel_steering_p_gain>
+      <frwheel_steering_p_gain>1e4</frwheel_steering_p_gain>
+      <flwheel_steering_i_gain>0</flwheel_steering_i_gain>
+      <frwheel_steering_i_gain>0</frwheel_steering_i_gain>
+      <flwheel_steering_d_gain>3e2</flwheel_steering_d_gain>
+      <frwheel_steering_d_gain>3e2</frwheel_steering_d_gain>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
+      <!-- <robotNamespace>/prius</robotNamespace> -->
+      <jointName>rear_right_wheel_joint, rear_left_wheel_joint, front_right_wheel_joint, front_left_wheel_joint, front_right_steer_joint, front_left_steer_joint, steering_joint</jointName>
+      <updateRate>100.0</updateRate>
+      <alwaysOn>true</alwaysOn>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="p3d" filename="libgazebo_ros_p3d.so">
+      <!-- <robotNamespace>/hmmwv</robotNamespace> -->
+      <bodyName>${base_link}</bodyName>
+      <topicName>${ground_truth_topic}</topicName>
+      <frameName>${map}</frameName>
+      <updateRate>100.0</updateRate>
+    </plugin>
+ </gazebo>
+
+</robot>
